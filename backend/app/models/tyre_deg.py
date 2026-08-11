@@ -37,7 +37,7 @@ class TyreDegradationModel:
         Enforces monotone non-decreasing constraint on tyre_age.
         """
         cmp_key = str(compound).upper().strip()
-        base_slope = self.compound_slopes.get(cmp_key, self.compound_slopes["UNKNOWN"])
+        base_slope = self.compound_slopes.get(cmp_key, self.compound_slopes.get("UNKNOWN", 0.0))
 
         # Thermal adjustment
         temp_delta = max(0.0, track_temp_c - 30.0)
