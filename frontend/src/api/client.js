@@ -1,6 +1,6 @@
-"""
-API Fetch Client for PITWALL Backend REST API.
-"""
+/**
+ * API Fetch Client for PITWALL Backend REST API.
+ */
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
