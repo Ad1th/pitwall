@@ -1,0 +1,70 @@
+{
+  "circuit": {
+    "circuit_id": "silverstone",
+    "name": "Silverstone Circuit",
+    "location": "Silverstone",
+    "country": "Great Britain",
+    "latitude": 52.0786,
+    "longitude": -1.0169,
+    "length_km": 5.891,
+    "turns": 18,
+    "pit_lane_loss_sec": 20.5,
+    "base_degradation_mult": 1.2,
+    "overtaking_difficulty_mult": 0.9
+  },
+  "race": {
+    "race_id": "2022-silverstone",
+    "year": 2022,
+    "round": 10,
+    "circuit_id": "silverstone",
+    "name": "British Grand Prix",
+    "date": "2022-07-03",
+    "total_laps": 52,
+    "official_winner_driver_id": "SAI"
+  },
+  "drivers": [
+    {"driver_id": "SAI", "code": "SAI", "permanent_number": 55, "first_name": "Carlos", "last_name": "Sainz", "nationality": "ESP"},
+    {"driver_id": "PER", "code": "PER", "permanent_number": 11, "first_name": "Sergio", "last_name": "Perez", "nationality": "MEX"},
+    {"driver_id": "HAM", "code": "HAM", "permanent_number": 44, "first_name": "Lewis", "last_name": "Hamilton", "nationality": "GBR"},
+    {"driver_id": "LEC", "code": "LEC", "permanent_number": 16, "first_name": "Charles", "last_name": "Leclerc", "nationality": "MON"}
+  ],
+  "constructors": [
+    {"constructor_id": "ferrari", "name": "Ferrari", "nationality": "ITA"},
+    {"constructor_id": "red_bull", "name": "Red Bull Racing", "nationality": "AUT"},
+    {"constructor_id": "mercedes", "name": "Mercedes", "nationality": "GER"}
+  ],
+  "lap_data": [
+    {
+      "race_id": "2022-silverstone",
+      "driver_id": "LEC",
+      "constructor_id": "ferrari",
+      "lap_number": 39,
+      "position": 1,
+      "lap_time_sec": 91.120,
+      "sector1_sec": 28.9,
+      "sector2_sec": 36.4,
+      "sector3_sec": 25.820,
+      "speed_st": 315.0,
+      "compound": "HARD",
+      "tyre_age_laps": 14,
+      "stint_number": 2,
+      "is_pit_lap": false,
+      "is_accurate": true,
+      "track_status": "4",
+      "gap_to_leader_sec": 0.0,
+      "interval_to_ahead_sec": 0.0
+    }
+  ],
+  "pit_stops": [],
+  "weather_telemetry": [
+    {
+      "race_id": "2022-silverstone",
+      "timestamp": "2022-07-03 15:00:00",
+      "air_temp_c": 19.5,
+      "track_temp_c": 31.0,
+      "humidity_pct": 50.0,
+      "pressure_mbar": 1016.0,
+      "rainfall_flag": false
+    }
+  ]
+}

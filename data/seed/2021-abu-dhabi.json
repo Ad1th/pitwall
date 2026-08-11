@@ -1,0 +1,99 @@
+{
+  "circuit": {
+    "circuit_id": "yas_marina",
+    "name": "Yas Marina Circuit",
+    "location": "Abu Dhabi",
+    "country": "United Arab Emirates",
+    "latitude": 24.4672,
+    "longitude": 54.6031,
+    "length_km": 5.281,
+    "turns": 16,
+    "pit_lane_loss_sec": 22.5,
+    "base_degradation_mult": 1.0,
+    "overtaking_difficulty_mult": 1.1
+  },
+  "race": {
+    "race_id": "2021-abu-dhabi",
+    "year": 2021,
+    "round": 22,
+    "circuit_id": "yas_marina",
+    "name": "Abu Dhabi Grand Prix",
+    "date": "2021-12-12",
+    "total_laps": 58,
+    "official_winner_driver_id": "VER"
+  },
+  "drivers": [
+    {"driver_id": "HAM", "code": "HAM", "permanent_number": 44, "first_name": "Lewis", "last_name": "Hamilton", "nationality": "GBR"},
+    {"driver_id": "VER", "code": "VER", "permanent_number": 33, "first_name": "Max", "last_name": "Verstappen", "nationality": "NED"},
+    {"driver_id": "PER", "code": "PER", "permanent_number": 11, "first_name": "Sergio", "last_name": "Perez", "nationality": "MEX"},
+    {"driver_id": "SAI", "code": "SAI", "permanent_number": 55, "first_name": "Carlos", "last_name": "Sainz", "nationality": "ESP"}
+  ],
+  "constructors": [
+    {"constructor_id": "mercedes", "name": "Mercedes", "nationality": "GER"},
+    {"constructor_id": "red_bull", "name": "Red Bull Racing", "nationality": "AUT"},
+    {"constructor_id": "ferrari", "name": "Ferrari", "nationality": "ITA"}
+  ],
+  "lap_data": [
+    {
+      "race_id": "2021-abu-dhabi",
+      "driver_id": "HAM",
+      "constructor_id": "mercedes",
+      "lap_number": 53,
+      "position": 1,
+      "lap_time_sec": 87.214,
+      "sector1_sec": 27.1,
+      "sector2_sec": 38.2,
+      "sector3_sec": 21.914,
+      "speed_st": 320.5,
+      "compound": "HARD",
+      "tyre_age_laps": 39,
+      "stint_number": 2,
+      "is_pit_lap": false,
+      "is_accurate": true,
+      "track_status": "4",
+      "gap_to_leader_sec": 0.0,
+      "interval_to_ahead_sec": 0.0
+    },
+    {
+      "race_id": "2021-abu-dhabi",
+      "driver_id": "VER",
+      "constructor_id": "red_bull",
+      "lap_number": 53,
+      "position": 2,
+      "lap_time_sec": 86.810,
+      "sector1_sec": 26.9,
+      "sector2_sec": 38.0,
+      "sector3_sec": 21.910,
+      "speed_st": 324.1,
+      "compound": "HARD",
+      "tyre_age_laps": 17,
+      "stint_number": 3,
+      "is_pit_lap": false,
+      "is_accurate": true,
+      "track_status": "4",
+      "gap_to_leader_sec": 11.942,
+      "interval_to_ahead_sec": 11.942
+    }
+  ],
+  "pit_stops": [
+    {
+      "race_id": "2021-abu-dhabi",
+      "driver_id": "VER",
+      "stop_number": 3,
+      "lap_number": 53,
+      "duration_sec": 2.4,
+      "total_pit_lane_time_sec": 14.2
+    }
+  ],
+  "weather_telemetry": [
+    {
+      "race_id": "2021-abu-dhabi",
+      "timestamp": "2021-12-12 17:00:00",
+      "air_temp_c": 24.1,
+      "track_temp_c": 29.4,
+      "humidity_pct": 55.0,
+      "pressure_mbar": 1014.2,
+      "rainfall_flag": false
+    }
+  ]
+}

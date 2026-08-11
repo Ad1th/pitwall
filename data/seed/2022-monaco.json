@@ -1,0 +1,69 @@
+{
+  "circuit": {
+    "circuit_id": "monaco",
+    "name": "Circuit de Monaco",
+    "location": "Monte Carlo",
+    "country": "Monaco",
+    "latitude": 43.7347,
+    "longitude": 7.4206,
+    "length_km": 3.337,
+    "turns": 19,
+    "pit_lane_loss_sec": 24.0,
+    "base_degradation_mult": 0.8,
+    "overtaking_difficulty_mult": 3.0
+  },
+  "race": {
+    "race_id": "2022-monaco",
+    "year": 2022,
+    "round": 7,
+    "circuit_id": "monaco",
+    "name": "Monaco Grand Prix",
+    "date": "2022-05-29",
+    "total_laps": 64,
+    "official_winner_driver_id": "PER"
+  },
+  "drivers": [
+    {"driver_id": "PER", "code": "PER", "permanent_number": 11, "first_name": "Sergio", "last_name": "Perez", "nationality": "MEX"},
+    {"driver_id": "SAI", "code": "SAI", "permanent_number": 55, "first_name": "Carlos", "last_name": "Sainz", "nationality": "ESP"},
+    {"driver_id": "VER", "code": "VER", "permanent_number": 1, "first_name": "Max", "last_name": "Verstappen", "nationality": "NED"},
+    {"driver_id": "LEC", "code": "LEC", "permanent_number": 16, "first_name": "Charles", "last_name": "Leclerc", "nationality": "MON"}
+  ],
+  "constructors": [
+    {"constructor_id": "red_bull", "name": "Red Bull Racing", "nationality": "AUT"},
+    {"constructor_id": "ferrari", "name": "Ferrari", "nationality": "ITA"}
+  ],
+  "lap_data": [
+    {
+      "race_id": "2022-monaco",
+      "driver_id": "LEC",
+      "constructor_id": "ferrari",
+      "lap_number": 16,
+      "position": 1,
+      "lap_time_sec": 97.450,
+      "sector1_sec": 23.5,
+      "sector2_sec": 42.1,
+      "sector3_sec": 31.850,
+      "speed_st": 280.0,
+      "compound": "WET",
+      "tyre_age_laps": 16,
+      "stint_number": 1,
+      "is_pit_lap": false,
+      "is_accurate": true,
+      "track_status": "1",
+      "gap_to_leader_sec": 0.0,
+      "interval_to_ahead_sec": 0.0
+    }
+  ],
+  "pit_stops": [],
+  "weather_telemetry": [
+    {
+      "race_id": "2022-monaco",
+      "timestamp": "2022-05-29 15:00:00",
+      "air_temp_c": 21.0,
+      "track_temp_c": 23.5,
+      "humidity_pct": 82.0,
+      "pressure_mbar": 1012.0,
+      "rainfall_flag": true
+    }
+  ]
+}
