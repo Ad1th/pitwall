@@ -2,23 +2,25 @@
 
 > **Don't analyze the race. Re-run it.**
 
-PITWALL is an open-source sports analytics platform built for the **AQX Sports Analytics Data Bowl 3.0**. It reconstructs historical Formula 1 race states \( \text{RaceState}(t) \) and evaluates counterfactual race strategies using statistical tyre degradation models, fuel pace decay equations, and vectorized Monte Carlo simulation.
+PITWALL is an open-source sports analytics platform built for the **AQX Sports Analytics Data Bowl 3.0**. It reconstructs historical Formula 1 race states \( \text{RaceState}(t) \) and evaluates counterfactual race strategies using statistical tyre degradation models, fuel pace decay equations, probabilistic overtaking friction kernels, and vectorized Monte Carlo simulation.
 
 ---
 
 ## 🏎️ Core Features
 
-- **Race State Reconstruction**: Reconstructs complete spatial vectors for all 20 drivers at any historical lap.
-- **Vectorized Monte Carlo Simulator**: Simulates 5,000 randomized race futures in under 300ms using NumPy array broadcasting.
-- **Strategy Regret Engine**: Quantifies the exact position gain or loss of alternative pit decisions relative to historical reality.
-- **Automated Race Autopsy**: Ranks key strategic decisions throughout a race by position regret impact.
-- **Telemetry Command Center**: Dark-mode telemetry UI featuring glassmorphic components, interactive lap scrubbers, and probability density curves.
+- **Race State Reconstruction**: Reconstructs complete spatial vectors for all 20 drivers at any historical lap across two operational modes (**Decision-Time Mode** vs **Hindsight / Oracle Mode**).
+- **Probabilistic Overtaking Mechanism**: Models dirty air pace delays and logistic overtake probabilities for 20-car traffic dynamics.
+- **Vectorized Monte Carlo Simulator**: Simulates 5,000 randomized race futures in under 300ms using NumPy array broadcasting while prioritizing physical model correctness.
+- **Coarse-to-Fine Strategy Optimizer**: Screens multi-stop strategies via fast coarse grid search (500 runs) and refines top candidates at 1-lap resolution (5,000 runs).
+- **Strategy Regret & Confidence Engine**: Quantifies position regret with 95% Monte Carlo confidence bounds and flags statistically indistinguishable strategies.
+- **Automated Race Autopsy**: Ranks key strategic decisions throughout a race by position regret impact without hardcoded pre-determined outcomes.
+- **Telemetry Command Center**: Dark-mode telemetry UI featuring glassmorphic components, interactive lap scrubbers, mode toggles, and probability density curves with shaded confidence regions.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Data Ingestion**: `FastF1`, `Jolpica-F1 API`, `OpenF1`
+- **Data Ingestion**: `FastF1`, `Jolpica-F1 API`, `OpenF1` (Supplemental 2023+)
 - **Analytical Storage**: `DuckDB` (Embedded OLAP)
 - **Predictive ML**: `scikit-learn`, `LightGBM`, `SciPy`
 - **Monte Carlo Engine**: Vectorized `NumPy`
@@ -31,7 +33,7 @@ PITWALL is an open-source sports analytics platform built for the **AQX Sports A
 
 - [`docs/PRD.md`](docs/PRD.md) — Authoritative Product Requirement Document
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — End-to-End System Architecture Specification
-- [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — F1 Data Ecosystem & Ingestion Strategy
+- [`docs/DATA_SOURCES.md`](docs/DATA_SOURCES.md) — F1 Data Ecosystem & Data Rights Specification
 - [`docs/MODELING.md`](docs/MODELING.md) — Statistical & Machine Learning Models Specification
 - [`docs/DATABASE.md`](docs/DATABASE.md) — DuckDB Schema & Entity Relationship Diagram
 - [`docs/API.md`](docs/API.md) — REST API Endpoints Specification

@@ -8,6 +8,8 @@
 
 The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request and response bodies use strict JSON formatting. HTTP error responses adhere to standard HTTP status codes and return detailed RFC 7807 error objects.
 
+*Note: All numerical values appearing in example payloads below are strictly `[ILLUSTRATIVE EXAMPLE PAYLOADS]` for schema demonstration purposes.*
+
 ---
 
 ## 2. API Endpoints Matrix
@@ -19,8 +21,8 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
 | `GET` | `/api/v1/races/{race_id}/state/{lap}` | Get exact reconstructed \( \text{RaceState}(t) \) at lap \( t \). |
 | `POST` | `/api/v1/simulate` | Run Monte Carlo strategy simulation for a driver at a specific lap. |
 | `POST` | `/api/v1/counterfactual` | Evaluate counterfactual decision vs actual historical outcome. |
-| `GET` | `/api/v1/races/{race_id}/autopsy` | Run automated historical race autopsy; rank key decision points. |
-| `GET` | `/api/v1/models/metrics` | Retrieve cross-validation accuracy metrics for tyre and pace models. |
+| `GET` | `/api/v1/races/{race_id}/autopsy` | Run automated historical race autopsy; rank key decision points by regret. |
+| `GET` | `/api/v1/models/metrics` | Retrieve cross-validation accuracy metrics for tyre, pace, and overtaking models. |
 | `GET` | `/api/v1/health` | Health check endpoint. |
 
 ---
@@ -33,7 +35,7 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
 - `race_id` (path, string): Unique race slug (e.g., `'2021-abu-dhabi'`).
 - `lap` (path, int): Lap number \( t \in [1, N_{\text{total}}] \).
 
-**Response Schema (`200 OK`)**:
+**Response Schema (`200 OK`) `[ILLUSTRATIVE EXAMPLE PAYLOAD]`**:
 ```json
 {
   "race_id": "2021-abu-dhabi",
@@ -81,6 +83,7 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
   "race_id": "2021-abu-dhabi",
   "decision_lap": 53,
   "target_driver_id": "HAM",
+  "mode": "decision_time",
   "num_simulations": 5000,
   "candidate_strategies": [
     {
@@ -97,38 +100,41 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
 }
 ```
 
-**Response Schema (`200 OK`)**:
+**Response Schema (`200 OK`) `[ILLUSTRATIVE EXAMPLE PAYLOAD]`**:
 ```json
 {
   "simulation_id": "sim-2021-ad-ham-l53",
   "race_id": "2021-abu-dhabi",
   "target_driver_id": "HAM",
   "decision_lap": 53,
-  "execution_time_ms": 142.8,
+  "mode": "decision_time",
+  "execution_time_ms": 284.5,
   "evaluations": [
     {
       "strategy_id": "STAY_OUT",
       "expected_finish_pos": 1.84,
+      "confidence_interval_95": [1.00, 2.00],
       "win_probability": 0.32,
       "podium_probability": 1.00,
       "position_distribution": {
         "P1": 1600,
-        "P2": 3400,
-        "P3": 0
+        "P2": 3400
       },
-      "strategy_regret_vs_optimal": 0.68
+      "strategy_regret_vs_optimal": 0.68,
+      "is_statistically_distinct": true
     },
     {
       "strategy_id": "PIT_NOW_SOFT",
       "expected_finish_pos": 1.16,
+      "confidence_interval_95": [1.00, 2.00],
       "win_probability": 0.84,
       "podium_probability": 1.00,
       "position_distribution": {
         "P1": 4200,
-        "P2": 800,
-        "P3": 0
+        "P2": 800
       },
-      "strategy_regret_vs_optimal": 0.00
+      "strategy_regret_vs_optimal": 0.00,
+      "is_statistically_distinct": true
     }
   ]
 }
@@ -138,10 +144,14 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
 
 ### 3.3 `GET /api/v1/races/{race_id}/autopsy`
 
-**Response Schema (`200 OK`)**:
+**Query Parameters**:
+- `mode` (optional, string): `"decision_time"` (default) or `"hindsight"`.
+
+**Response Schema (`200 OK`) `[ILLUSTRATIVE EXAMPLE PAYLOAD]`**:
 ```json
 {
   "race_id": "2021-abu-dhabi",
+  "mode": "decision_time",
   "total_laps": 58,
   "winner": "VER",
   "key_decisions": [
@@ -153,12 +163,12 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
       "actual_decision": "STAY_OUT",
       "recommended_decision": "PIT_NOW_SOFT",
       "estimated_regret_positions": 0.68,
-      "actual_expected_finish": 1.84,
-      "counterfactual_expected_finish": 1.16,
+      "regret_confidence_interval_95": [0.24, 1.12],
+      "is_statistically_distinct": true,
       "primary_contributing_factors": [
-        "Safety car tire age delta advantage (+36 lap fresher Softs vs old Hard)",
-        "Zero pit-stop time loss relative to green flag conditions under SC",
-        "Track position vulnerability on lap 58 restart"
+        "Safety car tire age delta advantage under model assumptions",
+        "Dirty air friction mitigation on restart lap",
+        "Probabilistic position transition model output"
       ]
     }
   ]

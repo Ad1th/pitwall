@@ -8,20 +8,20 @@
 
 PITWALL's development is broken into **16 modular, incremental stages (Stage 0 to Stage 15)** designed for rapid execution by autonomous coding agents.
 
-**Core Principle**: Every stage must leave the repository in a fully runnable, passing state with zero breaking errors.
+**Core Principle**: Every stage must leave the repository in a fully runnable, passing state with zero breaking errors. Acceptance criteria focus on statistical validity, data integrity, and functional correctness without requiring hardcoded analytical outcomes.
 
 ---
 
 ## 2. Stage Breakdown
 
-### Stage 0: System Blueprint & Repository Initialization
+### Stage 0: System Blueprint & Repository Initialization *(COMPLETED)*
 - **Goal**: Authoritative architecture design, database schema, data ecosystem research, and PRD specifications.
 - **Files Created**: `README.md`, `docs/*.md`, `.gitignore`, `.env.example`, `docker-compose.yml`.
 - **Dependencies**: None.
 - **Tasks**: Initialize git repository, write all project documentation files.
 - **Tests**: Verify all documentation links and repository structure.
 - **Acceptance Criteria**: Repository initialized with complete, unambiguous specifications.
-- **Demo Milestone**: N/A.
+- **Demo Milestone**: Documentation suite complete and committed to git.
 - **Must NOT Do**: Write backend/frontend code or run data downloads.
 
 ---
@@ -30,7 +30,7 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 - **Goal**: Build FastF1 and Jolpica API data ingestion scripts and DuckDB schema initialization.
 - **Files Affected**: `backend/app/db/`, `backend/app/ingestion/`, `scripts/seed_db.py`.
 - **Dependencies**: Stage 0.
-- **Tasks**: Set up DuckDB table DDL, implement `fastf1_adapter.py` and `jolpica_adapter.py`, create database seeding script for benchmark races (2021 Abu Dhabi, 2022 Monaco, 2022 Silverstone, 2023 Zandvoort).
+- **Tasks**: Set up DuckDB table DDL, implement `fastf1_adapter.py` and `jolpica_adapter.py`, create database seeding script for benchmark races (2021 Abu Dhabi, 2022 Monaco, 2022 Silverstone, 2023 Zandvoort). OpenF1 data is supplemental for 2023+ only.
 - **Tests**: `tests/test_ingestion.py` (verifies row counts, column types, non-null lap times).
 - **Acceptance Criteria**: Running `python scripts/seed_db.py --race 2021-abu-dhabi` populates DuckDB tables without error.
 - **Demo Milestone**: DuckDB contains clean lap data for benchmark races.
@@ -38,61 +38,61 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 
 ---
 
-### Stage 2: Race State Reconstruction Engine
-- **Goal**: Implement vector state reconstructor `RaceState(t)`.
+### Stage 2: Race State Reconstruction & Dual Mode Engine
+- **Goal**: Implement vector state reconstructor `RaceState(t)` supporting `Decision-Time Mode` and `Hindsight / Oracle Mode`.
 - **Files Affected**: `backend/app/engine/state.py`, `backend/app/schemas/state.py`.
 - **Dependencies**: Stage 1.
-- **Tasks**: Implement lap state extraction returning full 20-car spatial vector at lap \( t \), compute interval gaps, track compound wear, and track flag statuses.
-- **Tests**: `tests/test_state_engine.py` (verifies position ordering and gap consistency).
-- **Acceptance Criteria**: `RaceState.from_db(race_id='2021-abu-dhabi', lap=53)` returns exact positions (P1 Hamilton, P2 Verstappen with 11.94s gap).
+- **Tasks**: Implement lap state extraction returning full 20-car spatial vector at lap \( t \), compute interval gaps, track compound wear, track flag statuses, and support operational mode flags.
+- **Tests**: `tests/test_state_engine.py` (verifies position ordering, gap consistency, and mode separation).
+- **Acceptance Criteria**: `RaceState.from_db(race_id='2021-abu-dhabi', lap=53, mode='decision_time')` returns valid spatial vectors and gap matrices without error.
 - **Demo Milestone**: State engine unit tests passing.
 - **Must NOT Do**: Build Monte Carlo simulator or API server.
 
 ---
 
-### Stage 3: Baseline Tyre Degradation & Pace Models
-- **Goal**: Fit baseline statistical tyre degradation curves and fuel-load pace models.
-- **Files Affected**: `backend/app/models/tyre_deg.py`, `backend/app/models/pace.py`.
+### Stage 3: Baseline Tyre Degradation, Pace & Overtaking Models
+- **Goal**: Fit baseline statistical tyre degradation curves, fuel-load pace models, and logistic overtaking probability models.
+- **Files Affected**: `backend/app/models/tyre_deg.py`, `backend/app/models/pace.py`, `backend/app/models/overtaking.py`.
 - **Dependencies**: Stage 2.
-- **Tasks**: Implement Ridge Regression and GAM models for compound wear rate; fit clean-air base pace and fuel load penalty coefficient (~0.035 s/lap).
-- **Tests**: `tests/test_models.py` (verifies positive degradation slope with tyre age).
-- **Acceptance Criteria**: Tyre model RMSE \( \le 0.35 \) s/lap on validation set.
+- **Tasks**: Implement Ridge Regression and GAM models for compound wear rate; fit clean-air base pace and fuel load penalty coefficients empirically; fit logistic overtaking probability model based on pace deltas, tyre age deltas, and circuit friction.
+- **Tests**: `tests/test_models.py` (verifies positive degradation slope with tyre age and valid overtaking probabilities in [0, 1]).
+- **Acceptance Criteria**: Models train cleanly on historical data and return valid pace and overtaking predictions without hardcoded constant assumptions.
 - **Demo Milestone**: Model training script saves weights to `models/artifacts/`.
 - **Must NOT Do**: Implement LightGBM hyperparameter search or complex neural nets.
 
 ---
 
 ### Stage 4: Vectorized Monte Carlo Race Simulator Kernel
-- **Goal**: Build high-performance NumPy simulation engine.
+- **Goal**: Build high-performance NumPy simulation engine with overtaking friction and statistical validity priority.
 - **Files Affected**: `backend/app/engine/simulator.py`.
 - **Dependencies**: Stage 3.
-- **Tasks**: Implement `MonteCarloSimulator.run(state, candidate_strategies, n_sims=5000)` using vectorized array broadcasting. Sample pace noise, pit stop variances, and SC probabilities.
-- **Tests**: `tests/test_simulator.py` (verifies 5,000 simulations complete in < 450ms and results are deterministic given random seed).
-- **Acceptance Criteria**: Output yields expected finish positions and position probability histograms.
-- **Demo Milestone**: Benchmark test logs 5,000 simulations run in < 300ms.
-- **Must NOT Do**: Build frontend UI.
+- **Tasks**: Implement `MonteCarloSimulator.run(state, candidate_strategies, n_sims=5000)` using vectorized array broadcasting. Sample pace noise, pit stop variances, overtaking friction swaps, and SC probabilities.
+- **Tests**: `tests/test_simulator.py` (verifies 20-car position transitions, statistical correctness, non-negative position variance, and deterministic outputs given fixed random seed).
+- **Acceptance Criteria**: **Primary Criteria**: Physical state vector correctness and overtaking logic validation. **Optimization Target**: Execution under 450ms on CPU.
+- **Demo Milestone**: Simulator test suite passing with deterministic reproducibility.
+- **Must NOT Do**: Sacrifice model statistical validity for speed optimizations.
 
 ---
 
 ### Stage 5: Counterfactual Regret Engine & Strategy Optimizer
-- **Goal**: Build paired counterfactual simulation engine and strategy regret calculator.
+- **Goal**: Build paired counterfactual simulation engine, coarse-to-fine strategy search optimizer, and confidence interval evaluator.
 - **Files Affected**: `backend/app/engine/counterfactual.py`, `backend/app/engine/optimizer.py`.
 - **Dependencies**: Stage 4.
-- **Tasks**: Implement paired actual vs counterfactual simulation comparator; compute strategy regret \( \mathbb{E}[\text{Actual}] - \mathbb{E}[\text{CF}] \).
+- **Tasks**: Implement coarse grid search screening (500 runs) + fine local refinement (5,000 runs); compute strategy regret with 95% confidence bounds; perform statistical indistinguishability tests.
 - **Tests**: `tests/test_counterfactual.py`.
-- **Acceptance Criteria**: Correctly identifies Hamilton staying out on Lap 53 at Abu Dhabi 2021 as high-regret decision (+0.68 position regret vs pitting for Softs).
-- **Demo Milestone**: Counterfactual engine CLI outputs regret score.
+- **Acceptance Criteria**: Counterfactual engine runs paired simulations, outputs 95% confidence intervals, flags statistically indistinguishable strategies, and computes strategy regret without hardcoded answer assertions.
+- **Demo Milestone**: Counterfactual engine CLI outputs regret score and 95% CIs.
 - **Must NOT Do**: Integrate LLM natural language generator yet.
 
 ---
 
 ### Stage 6: FastAPI Backend REST Services
-- **Goal**: Wrap state engine, simulator, and counterfactual engine in REST API endpoints.
+- **Goal**: Wrap state engine, simulator, and counterfactual engine in REST API endpoints supporting mode selection.
 - **Files Affected**: `backend/app/main.py`, `backend/app/api/v1/`.
 - **Dependencies**: Stage 5.
-- **Tasks**: Build `/api/v1/races`, `/state/{lap}`, `/simulate`, `/counterfactual`, `/autopsy` endpoints using FastAPI and Pydantic schemas.
+- **Tasks**: Build `/api/v1/races`, `/state/{lap}`, `/simulate`, `/counterfactual`, `/autopsy` endpoints using FastAPI and Pydantic schemas, supporting `mode` query parameter.
 - **Tests**: `tests/test_api.py` (using `httpx.AsyncClient` / `TestClient`).
-- **Acceptance Criteria**: OpenAPI spec interactive docs at `http://localhost:8000/docs` return 200 OK for all endpoints.
+- **Acceptance Criteria**: OpenAPI spec interactive docs at `http://localhost:8000/docs` return 200 OK for all endpoints with correct confidence interval fields.
 - **Demo Milestone**: Live API server executing simulations via curl request.
 - **Must NOT Do**: Build complex websocket streaming if HTTP JSON is sufficient.
 
@@ -111,25 +111,25 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 ---
 
 ### Stage 8: Race Command Center View Implementation
-- **Goal**: Build main live race scrub and telemetry view.
+- **Goal**: Build main live race scrub and telemetry view with mode toggle.
 - **Files Affected**: `frontend/src/views/CommandCenter.jsx`, `frontend/src/components/standings/`.
 - **Dependencies**: Stage 7.
-- **Tasks**: Build lap scrubber slider, live driver standings leaderboard, position gap meters, and tyre compound badges.
+- **Tasks**: Build lap scrubber slider, operational mode toggle (`Decision-Time` vs `Hindsight`), live driver standings leaderboard, position gap meters, and tyre compound badges.
 - **Tests**: Component render unit tests.
 - **Acceptance Criteria**: Scrubbing lap slider updates standings table and gap deltas in real-time (< 50ms UI update).
-- **Demo Milestone**: Interactive lap scrubber showing 2021 Abu Dhabi race progression.
+- **Demo Milestone**: Interactive lap scrubber showing race progression.
 - **Must NOT Do**: Connect strategy simulator yet.
 
 ---
 
 ### Stage 9: Interactive Strategy Simulator View
-- **Goal**: Build strategy builder UI allowing custom pit window simulations.
+- **Goal**: Build strategy builder UI with coarse grid search and confidence interval visualizations.
 - **Files Affected**: `frontend/src/views/StrategySimulator.jsx`, `frontend/src/components/simulator/`.
 - **Dependencies**: Stage 8.
-- **Tasks**: Build strategy editor toolbar (pit lap picker, compound selector), trigger API POST `/api/v1/simulate`, and render Monte Carlo finish position density charts.
+- **Tasks**: Build strategy editor toolbar (coarse grid search toggle, pit lap picker, compound selector), trigger API POST `/api/v1/simulate`, and render Monte Carlo finish position density charts with 95% confidence shaded regions and indistinguishability alert banners.
 - **Tests**: End-to-end API simulation call integration test.
-- **Acceptance Criteria**: Selecting "PIT NOW (SOFT)" triggers backend simulation and updates probability density curve within 500ms.
-- **Demo Milestone**: Interactive strategy sandbox operational.
+- **Acceptance Criteria**: Triggering simulation updates probability density curve and confidence bounds within 500ms.
+- **Demo Milestone**: Interactive strategy sandbox operational with confidence visualization.
 - **Must NOT Do**: Over-complicate chart animations.
 
 ---
@@ -138,21 +138,21 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 - **Goal**: Build retrospective autopsy report and split-screen counterfactual replay views.
 - **Files Affected**: `frontend/src/views/RaceAutopsy.jsx`, `frontend/src/views/CounterfactualReplay.jsx`.
 - **Dependencies**: Stage 9.
-- **Tasks**: Render strategic regret mistake ranking table, narrative breakdown cards, and dual-trajectory race replay line charts.
+- **Tasks**: Render strategic regret mistake ranking table with 95% CIs, narrative breakdown cards, and dual-trajectory race replay line charts.
 - **Tests**: Frontend snapshot & rendering tests.
-- **Acceptance Criteria**: Abu Dhabi 2021 autopsy highlights Lap 53 Mercedes mistake as #1 ranked regret event.
+- **Acceptance Criteria**: Autopsy view renders top ranked regret events dynamically based on API output.
 - **Demo Milestone**: Complete race autopsy screen functioning.
 - **Must NOT Do**: Add extraneous static text.
 
 ---
 
-### Stage 11: Quantitative Model Validation & Benchmarking Suite
-- **Goal**: Execute full temporal backtesting benchmark suite and generate calibration reports.
+### Stage 11: Quantitative Model Validation & Model Ablation Suite
+- **Goal**: Execute full temporal backtesting benchmark suite, model ablation tests, and generate calibration reports.
 - **Files Affected**: `scripts/evaluate.py`, `reports/validation_results.json`, `docs/VALIDATION.md`.
 - **Dependencies**: Stage 10.
-- **Tasks**: Run rolling-origin evaluation across 4 benchmark holdout races; calculate RMSE, MAE, and Brier scores; update validation reports.
+- **Tasks**: Run rolling-origin evaluation across 4 benchmark holdout races; calculate RMSE, MAE, Brier scores, RPS, and EMD; execute model ablation runs (`--no-tyre-deg`, `--no-traffic`); update validation reports.
 - **Tests**: Verification script execution.
-- **Acceptance Criteria**: System meets all target accuracy thresholds documented in `docs/VALIDATION.md`.
+- **Acceptance Criteria**: Validation suite executes and outputs empirical evaluation metrics and ablation tables without errors.
 - **Demo Milestone**: Validation report generated and committed to repo.
 - **Must NOT Do**: Mutate validation dataset to artificial perfection.
 
@@ -198,7 +198,7 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 - **Goal**: Draft competition narrative, export demo video screenshots, compile open-source release package.
 - **Files Affected**: `docs/DEVPOST_SUBMISSION.md`, `README.md`, `demo/`.
 - **Dependencies**: Stage 14.
-- **Tasks**: Write Devpost project description highlighting counterfactual decision intelligence, generate architectural diagrams, compile reproduciblity guide.
+- **Tasks**: Write Devpost project description highlighting counterfactual decision intelligence, generate architectural diagrams, compile reproducibility guide.
 - **Tests**: Final documentation check.
 - **Acceptance Criteria**: Complete competition submission package ready for judges.
 - **Demo Milestone**: Final competition-ready release package.

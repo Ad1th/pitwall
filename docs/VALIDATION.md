@@ -4,45 +4,82 @@
 
 ---
 
-## 1. Validation Philosophy & Metrics
+## 1. Validation Philosophy: Separation of Tasks
 
-To prove statistical defensibility to AQX Data Bowl 3.0 judges, PITWALL enforces rigorous validation standards across all predictive and simulation components:
+To ensure scientific defensibility, PITWALL strictly separates **Predictive Model Validation** (evaluating models against empirical ground-truth observations) from **Counterfactual Evaluation** (evaluating unobserved hypothetical strategies):
 
-1. **Strict Temporal Integrity**: Zero look-ahead bias; models trained on past data never access future lap information during validation runs.
-2. **Multi-Tiered Evaluation**:
-   - **Point Metrics**: Root Mean Squared Error (RMSE) & Mean Absolute Error (MAE) for lap times and positions.
-   - **Probabilistic Calibration**: Probability Integral Transform (PIT) histograms and Brier Score for Monte Carlo finish position distributions.
-   - **Counterfactual Decision Accuracy**: Historical retrospective agreement with recognized expert race strategy consensus.
+```
+                                    ┌────────────────────────────────────────────────────────┐
+                                    │                   VALIDATION FRAMEWORK                 │
+                                    └───────────────────────────┬────────────────────────────┘
+                                                                │
+                                ┌───────────────────────────────┴───────────────────────────────┐
+                                ▼                                                               ▼
+    ┌───────────────────────────────────────────────────────┐       ┌───────────────────────────────────────────────────────┐
+    │ 1. PREDICTIVE VALIDATION (Empirical Ground Truth)     │       │ 2. COUNTERFACTUAL EVALUATION (Unobserved Futures)     │
+    ├───────────────────────────────────────────────────────┤       ├───────────────────────────────────────────────────────┤
+    │ - Actual Lap Times vs Model Predictions               │       │ - Sensitivity & Stress Testing                        │
+    │ - Actual Race Winners vs Binary Win Probabilities     │       │ - Internal Model Consistency checks                   │
+    │ - Actual Finish Positions vs Multiclass Distributions │       │ - Qualitative Sanity Checks (Expert Strategy Consensus│
+    │ - Metrics: RMSE, Brier Score, RPS, EMD                │       │   treated strictly as sanity check, NOT ground truth) │
+    └───────────────────────────────────────────────────────┘       └───────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 2. Quantitative Benchmark Targets
+## 2. Statistical Metrics & Evaluation Methodology
 
-| Evaluation Metric | Target Threshold | Minimum Acceptable | Primary Target Domain |
+### 2.1 Continuous Lap Time & Pace Metrics
+- **Root Mean Squared Error (RMSE)**: Evaluated on clean-air, green-flag laps across temporal holdout seasons.
+- **Mean Absolute Error (MAE)**: Evaluated specifically on high-age tyre stints (\( a > 15 \text{ laps} \)).
+
+### 2.2 Binary Outcome Metrics (Win Probability)
+- **Brier Score**: Evaluates binary win probability calibration:
+  \[
+  \text{BS} = \frac{1}{N} \sum_{i=1}^N (y_i - \hat{p}_i)^2 \quad \text{where } y_i \in \{0, 1\}
+  \]
+- **Binary Log Loss & Reliability Diagrams**: Visualizes calibration across probability deciles (0–10%, 10–20%, ..., 90–100%).
+
+### 2.3 Multiclass & Distributional Metrics (P1–P20 Finish Distributions)
+- **Ranked Probability Score (RPS)**: Measures calibration of ordered position probability distributions:
+  \[
+  \text{RPS} = \frac{1}{K-1} \sum_{m=1}^{K-1} \left( \sum_{k=1}^m \hat{p}_k - \sum_{k=1}^m y_k \right)^2 \quad (K=20)
+  \]
+- **Earth Mover's Distance (EMD / 1D Wasserstein)**: Quantifies structural distance between simulated position histograms and actual observed final standings.
+- **Probability Integral Transform (PIT) Histograms**: Verifies uniform coverage of predicted quantile distributions.
+
+---
+
+## 3. Quantitative Target Benchmarks `[ILLUSTRATIVE TARGETS]`
+
+*Note: The numerical values below represent illustrative target hypotheses to be empirically measured during validation. They are NOT hardcoded ground truths.*
+
+| Evaluation Metric | Target Hypothesis `[ILLUSTRATIVE]` | Minimum Acceptable `[ILLUSTRATIVE]` | Primary Target Domain |
 | :--- | :--- | :--- | :--- |
 | **Pace Model Lap Time RMSE** | \( < 0.32 \text{s} \) | \( < 0.45 \text{s} \) | Green-flag clean-air laps |
 | **Tyre Degradation MAE** | \( < 0.25 \text{s/lap} \) | \( < 0.40 \text{s/lap} \) | High-age tyre stints (\( a > 15 \)) |
 | **Final Race Position MAE** | \( < 1.2 \text{ positions} \) | \( < 2.0 \text{ positions} \) | 20-lap remaining simulation horizon |
-| **Win Probability Calibration Brier Score** | \( < 0.08 \) | \( < 0.14 \) | Race winner prediction |
-| **Simulation Latency (5,000 runs)** | \( < 300 \text{ms} \) | \( < 600 \text{ms} \) | End-to-end API response |
+| **Win Probability Brier Score** | \( < 0.08 \) | \( < 0.14 \) | Race winner binary prediction |
+| **Position Distribution RPS** | \( < 0.06 \) | \( < 0.10 \) | Full 20-car finish order distribution |
 
 ---
 
-## 3. Historical Holdout Validation Races
+## 4. Counterfactual Evaluation Protocol (No Predetermined Outcomes)
 
-The validation benchmark suite evaluates PITWALL on 4 iconic historical F1 races featuring high strategic volatility:
+Counterfactual outcomes cannot be validated against direct empirical ground truth because alternative decisions were never run in reality. PITWALL evaluates counterfactual quality via:
 
-1. **2021 Abu Dhabi Grand Prix (Yas Marina)**: Late Safety Car stint decision (Lap 53) — Mercedes (Hamilton) vs Red Bull (Verstappen). Tests Safety Car restart tyre delta evaluation.
-2. **2022 Monaco Grand Prix (Monte Carlo)**: Dynamic Wet-to-Dry crossover strategy — Ferrari (Leclerc/Sainz) vs Red Bull (Perez/Verstappen). Tests pit window crossover timing under wet conditions.
-3. **2022 British Grand Prix (Silverstone)**: Late Safety Car restart decision — Ferrari (Leclerc vs Sainz). Tests team mate split-strategy optimization.
-4. **2023 Dutch Grand Prix (Zandvoort)**: Extreme rain chaos on Lap 1–2. Tests rapid rain transition Markov chain and intermediate tyre pit timing.
+1. **Monotonicity & Sensitivity Audits**: Pitting for fresh tyres under green flag conditions must increase pace; adding dirty air delay must decrease pace.
+2. **Confidence Bounds & Overlap Audits**: Counterfactual recommendations must include 95% Monte Carlo confidence intervals. If strategy CIs overlap, the system must report strategies as statistically indistinguishable rather than forcing a arbitrary winner.
+3. **Qualitative Sanity Checks**: Retrospective comparisons against consensus expert post-race analysis (e.g. F1 strategy reviews) serve purely as **qualitative sanity checks**, never as mathematical ground truth.
+4. **No Hardcoded Test Expectations**: Tests must **NEVER** assert fixed predetermined numbers (such as requiring exactly `+0.68` regret for Hamilton at Abu Dhabi 2021). Tests assert structural properties, non-negativity of variance, and proper execution of fitted models.
 
 ---
 
-## 4. Rolling-Origin Backtesting Engine (`scripts/evaluate.py`)
+## 5. Model Ablation & Reproducibility Requirements
 
-Validation is executed automatically via `make evaluate` using rolling-origin backtesting:
-- For a target race at Lap \( t \), initialize simulator using state at Lap \( t \).
-- Predict future lap pace, pit stops, and final finishing positions for all 20 cars.
-- Advance \( t \to t + 5 \) laps and repeat until race finish.
-- Log error metrics and generate calibration curves saved to `reports/validation_results.json`.
+To evaluate the contribution of individual architectural components, `scripts/evaluate.py` supports **Model Ablation Flags**:
+- `--no-tyre-deg`: Replaces degradation model with flat pace.
+- `--no-traffic`: Disables dirty air delay and overtaking friction.
+- `--no-weather-markov`: Replaces dynamic weather transitions with static weather.
+
+**Reproducibility Requirement**: Every evaluation run outputs a deterministic execution hash based on dataset checksum, model parameters, and random seed (`seed=42`).

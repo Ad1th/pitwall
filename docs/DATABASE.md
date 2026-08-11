@@ -6,26 +6,10 @@
 
 ## 1. Hybrid Analytical Database Architecture
 
-PITWALL utilizes a **Hybrid DuckDB + Parquet Analytical Architecture** optimized for high-speed columnar filtering, rolling lap window aggregations, and sub-second Monte Carlo seed queries:
+PITWALL utilizes a **Hybrid DuckDB + Parquet Analytical Architecture** optimized for high-speed columnar filtering, rolling lap window aggregations, and fast Monte Carlo state initialization:
 
-- **DuckDB Core (`data/pitwall.duckdb`)**: Embedded columnar OLAP database handling all lap times, sector telemetry, tyre wear vectors, and historical stint features. DuckDB provides vectorized SQL execution, seamless Pandas/Polars zero-copy interoperability, and single-file serverless deployment.
+- **DuckDB Core (`data/pitwall.duckdb`)**: Embedded columnar OLAP database handling all lap times, sector telemetry, tyre wear vectors, circuit metadata, and model artifacts. DuckDB provides vectorized SQL execution, seamless Pandas/Polars zero-copy interoperability, and single-file serverless deployment.
 - **Parquet Cache Layer (`data/parquet/`)**: Compressed, partitioned storage for raw lap telemetry and simulation iteration snapshots (`data/parquet/simulations/race_{id}_lap_{lap}.parquet`).
-- **SQLite Configuration Store (`data/config.db`)**: Optional lightweight KV store for persistent UI user preferences, saved counterfactual scenarios, and benchmark audit runs.
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    PITWALL Data Layer                   │
-├────────────────────────────┬────────────────────────────┤
-│  DuckDB (OLAP Analytical)  │   Parquet (Simulation Cache│
-│   - Races, Laps, Stints    │   - Monte Carlo Outputs    │
-│   - Feature vectors        │   - 10k Iteration Tracks   │
-└──────────────┬─────────────┴──────────────┬─────────────┘
-               │                            │
-               ▼                            ▼
-┌─────────────────────────────────────────────────────────┐
-│              FastAPI Engine & ML Ingest                 │
-└─────────────────────────────────────────────────────────┘
-```
 
 ---
 
@@ -65,7 +49,8 @@ CREATE TABLE IF NOT EXISTS circuits (
     length_km DOUBLE NOT NULL,
     turns INT,
     pit_lane_loss_sec DOUBLE NOT NULL DEFAULT 22.0,
-    base_degradation_mult DOUBLE DEFAULT 1.0
+    base_degradation_mult DOUBLE DEFAULT 1.0,
+    overtaking_difficulty_mult DOUBLE DEFAULT 1.0 -- Circuit overtaking resistance factor
 );
 ```
 
@@ -95,16 +80,7 @@ CREATE TABLE IF NOT EXISTS drivers (
 );
 ```
 
-### 3.4 `constructors`
-```sql
-CREATE TABLE IF NOT EXISTS constructors (
-    constructor_id VARCHAR PRIMARY KEY,
-    name VARCHAR NOT NULL,
-    nationality VARCHAR
-);
-```
-
-### 3.5 `lap_data` (Core Analytical Fact Table)
+### 3.4 `lap_data` (Core Analytical Fact Table)
 ```sql
 CREATE TABLE IF NOT EXISTS lap_data (
     race_id VARCHAR NOT NULL,
@@ -129,47 +105,21 @@ CREATE TABLE IF NOT EXISTS lap_data (
 );
 ```
 
-### 3.6 `pit_stops`
-```sql
-CREATE TABLE IF NOT EXISTS pit_stops (
-    race_id VARCHAR NOT NULL,
-    driver_id VARCHAR NOT NULL,
-    stop_number INT NOT NULL,
-    lap_number INT NOT NULL,
-    duration_sec DOUBLE NOT NULL,
-    total_pit_lane_time_sec DOUBLE,
-    PRIMARY KEY (race_id, driver_id, stop_number)
-);
-```
-
-### 3.7 `weather_telemetry`
-```sql
-CREATE TABLE IF NOT EXISTS weather_telemetry (
-    race_id VARCHAR NOT NULL,
-    timestamp TIMESTAMP NOT NULL,
-    air_temp_c DOUBLE,
-    track_temp_c DOUBLE,
-    humidity_pct DOUBLE,
-    pressure_mbar DOUBLE,
-    rainfall_flag BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (race_id, timestamp)
-);
-```
-
-### 3.8 `simulation_runs`
+### 3.5 `simulation_runs`
 ```sql
 CREATE TABLE IF NOT EXISTS simulation_runs (
     simulation_id VARCHAR PRIMARY KEY,
     race_id VARCHAR NOT NULL,
     target_driver_id VARCHAR NOT NULL,
     decision_lap INT NOT NULL,
+    simulation_mode VARCHAR NOT NULL DEFAULT 'decision_time', -- 'decision_time' vs 'hindsight'
     num_iterations INT NOT NULL DEFAULT 5000,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     seed INT DEFAULT 42
 );
 ```
 
-### 3.9 `strategy_evaluations`
+### 3.6 `strategy_evaluations`
 ```sql
 CREATE TABLE IF NOT EXISTS strategy_evaluations (
     evaluation_id VARCHAR PRIMARY KEY,
@@ -177,14 +127,14 @@ CREATE TABLE IF NOT EXISTS strategy_evaluations (
     strategy_code VARCHAR NOT NULL, -- e.g., 'PIT_NOW_HARD', 'STAY_OUT'
     planned_pit_laps VARCHAR, -- e.g., '[32]'
     expected_finish_pos DOUBLE NOT NULL,
+    finish_pos_p05 DOUBLE NOT NULL, -- 95% CI lower bound (5th percentile)
+    finish_pos_p95 DOUBLE NOT NULL, -- 95% CI upper bound (95th percentile)
     win_probability DOUBLE NOT NULL,
     podium_probability DOUBLE NOT NULL,
     points_probability DOUBLE NOT NULL,
     dnf_probability DOUBLE NOT NULL,
-    position_p10 DOUBLE,
-    position_p50 DOUBLE,
-    position_p90 DOUBLE,
-    regret_vs_optimal DOUBLE NOT NULL DEFAULT 0.0
+    regret_vs_optimal DOUBLE NOT NULL DEFAULT 0.0,
+    is_statistically_distinct BOOLEAN DEFAULT TRUE
 );
 ```
 
@@ -193,5 +143,5 @@ CREATE TABLE IF NOT EXISTS strategy_evaluations (
 ## 4. Analytical Indexing & Optimization Strategy
 
 1. **Composite Primary Keys**: Enforces entity integrity on multi-tenant race tables (`race_id`, `driver_id`, `lap_number`).
-2. **Columnar Compression**: DuckDB auto-compresses telemetry columns using ZSTD / Bitpacking, reducing disk memory footprint from ~2GB raw JSON to ~140MB DuckDB binary.
-3. **Pre-computed View `v_race_state_snapshot`**: Materializes exact race state \( \text{RaceState}(t) \) at lap \( t \) including current position, compound, tyre age, and gap vectors for instant simulation initial condition bootstrapping.
+2. **Columnar Compression**: DuckDB auto-compresses telemetry columns using ZSTD / Bitpacking, reducing disk memory footprint.
+3. **Pre-computed View `v_race_state_snapshot`**: Materializes exact race state \( \text{RaceState}(t) \) at lap \( t \) including current position, compound, tyre age, and gap vectors for fast simulation initial condition bootstrapping.
