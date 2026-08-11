@@ -1,0 +1,127 @@
+/* PITWALL — F1 Telemetry Design System CSS Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+:root {
+  --bg-dark: #0A0D14;
+  --bg-card: rgba(16, 22, 34, 0.75);
+  --bg-card-hover: rgba(24, 32, 48, 0.85);
+  --border-glass: rgba(255, 255, 255, 0.1);
+  --border-glass-bright: rgba(255, 255, 255, 0.25);
+  
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  
+  --accent-red: #E10600;
+  --accent-red-glow: rgba(225, 6, 0, 0.35);
+  --accent-cyan: #00E5FF;
+  --accent-yellow: #FFF200;
+  --accent-green: #10B981;
+
+  /* Tyre Compounds */
+  --tyre-soft: #FF1801;
+  --tyre-medium: #FFF200;
+  --tyre-hard: #FFFFFF;
+  --tyre-inter: #00E5FF;
+  --tyre-wet: #0072FF;
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-panel:hover {
+  border-color: var(--border-glass-bright);
+}
+
+/* Font utilities */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Tyre Badges */
+.tyre-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.tyre-soft {
+  background: var(--tyre-soft);
+  color: #FFFFFF;
+}
+
+.tyre-medium {
+  background: var(--tyre-medium);
+  color: #0A0D14;
+}
+
+.tyre-hard {
+  background: var(--tyre-hard);
+  color: #0A0D14;
+}
+
+.tyre-inter {
+  background: var(--tyre-inter);
+  color: #0A0D14;
+}
+
+.tyre-wet {
+  background: var(--tyre-wet);
+  color: #FFFFFF;
+}
+
+.tyre-unknown {
+  background: #475569;
+  color: #FFFFFF;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
