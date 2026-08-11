@@ -55,10 +55,17 @@ class RollingOriginEvaluator:
         state_engine = RaceStateEngine(self.conn)
 
         if not origin_laps:
-            race_row = self.conn.execute("SELECT total_laps FROM races WHERE race_id = ?", [race_id]).fetchone()
-            total_laps = race_row[0] if race_row else 50
-            # Sample 3 rolling-origin decision laps
-            origin_laps = [max(1, int(total_laps * 0.25)), max(1, int(total_laps * 0.50)), max(1, int(total_laps * 0.75))]
+            available_laps = [
+                row[0]
+                for row in self.conn.execute(
+                    "SELECT DISTINCT lap_number FROM lap_data WHERE race_id = ? ORDER BY lap_number",
+                    [race_id],
+                ).fetchall()
+            ]
+            if available_laps:
+                origin_laps = available_laps
+            else:
+                origin_laps = [1]
 
         evaluations_count = 0
         actual_finishes = []

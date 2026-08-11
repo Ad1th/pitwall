@@ -1,0 +1,76 @@
+{
+  "benchmark_summary": {
+    "races_evaluated": 4,
+    "ablations": {
+      "no_tyre_deg": false,
+      "no_traffic": false,
+      "no_weather_markov": false
+    },
+    "mean_rmse": 0.25,
+    "mean_mae": 0.25,
+    "mean_brier_score": 0.25,
+    "mean_rps": 0.0132
+  },
+  "race_details": [
+    {
+      "race_id": "2021-abu-dhabi",
+      "origin_laps_evaluated": 1,
+      "ablations": {
+        "no_tyre_deg": false,
+        "no_traffic": false,
+        "no_weather_markov": false
+      },
+      "metrics": {
+        "rmse": 1.0,
+        "mae": 1.0,
+        "brier_score": 1.0,
+        "mean_rps": 0.0526
+      }
+    },
+    {
+      "race_id": "2022-monaco",
+      "origin_laps_evaluated": 1,
+      "ablations": {
+        "no_tyre_deg": false,
+        "no_traffic": false,
+        "no_weather_markov": false
+      },
+      "metrics": {
+        "rmse": 0.0,
+        "mae": 0.0,
+        "brier_score": 0.0,
+        "mean_rps": 0.0
+      }
+    },
+    {
+      "race_id": "2022-silverstone",
+      "origin_laps_evaluated": 1,
+      "ablations": {
+        "no_tyre_deg": false,
+        "no_traffic": false,
+        "no_weather_markov": false
+      },
+      "metrics": {
+        "rmse": 0.0,
+        "mae": 0.0,
+        "brier_score": 0.0,
+        "mean_rps": 0.0
+      }
+    },
+    {
+      "race_id": "2023-zandvoort",
+      "origin_laps_evaluated": 1,
+      "ablations": {
+        "no_tyre_deg": false,
+        "no_traffic": false,
+        "no_weather_markov": false
+      },
+      "metrics": {
+        "rmse": 0.0,
+        "mae": 0.0,
+        "brier_score": 0.0,
+        "mean_rps": 0.0
+      }
+    }
+  ]
+}
