@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+.venv/
+
+# DuckDB / Parquet Cache / FastF1 Cache
+data/pitwall.duckdb
+data/pitwall.duckdb.wal
+data/cache/
+data/raw/
+.fastf1-cache/
+*.parquet
+
+# Node / React
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & Secrets
+.env
+.env.local
+*.pem
+
+# IDEs & System
+.DS_Store
+.idea/
+.vscode/
+*.swp
