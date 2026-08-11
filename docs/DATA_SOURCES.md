@@ -6,12 +6,12 @@
 
 ## 1. Overview & Data Ingestion Philosophy
 
-PITWALL relies on official, open-source, and legally compliant Formula 1 data sources. To ensure high reproducibility, low latency during simulation, and robust offline capabilities, PITWALL adopts a **Hybrid Ingestion & Caching Strategy**:
+PITWALL relies on publicly accessible and legally compliant Formula 1 data sources. To ensure reproducibility, low simulation latency, and robust offline capabilities, PITWALL adopts a **Hybrid Ingestion & Caching Strategy**:
 
-1. **Primary Ingestion Layer**: `FastF1` Python library for high-granularity lap timing, tyre compound telemetry, pit stop durations, and track weather across all benchmark seasons (2018–2024).
-2. **Historical Relational Layer**: `Jolpica-F1 API` (the official community drop-in successor to the Ergast API) for historical race results, driver/constructor standings, qualifying positions, and circuit metadata.
-3. **High-Frequency Telemetry Layer (Supplemental, 2023+ Only)**: `OpenF1 REST API` for supplemental 10Hz cornering telemetry, detailed track status change logs, and driver pit-lane timing delta validation. **Note**: Historical benchmark races prior to 2023 (e.g., 2021 Abu Dhabi, 2022 Monaco, 2022 Silverstone) do **NOT** depend on OpenF1 and operate fully using FastF1 + Jolpica.
-4. **Offline Benchmark Seed Layer**: Kaggle Formula 1 World Championship static dataset (1950–2024 CSV dump) pre-seeded into DuckDB for offline development and fast execution of integration tests without network dependencies.
+1. **Primary Ingestion Layer**: `FastF1` Python library for lap timing, sector split telemetry, tyre compound telemetry, pit stop durations, and track weather across benchmark seasons (2018–2024).
+2. **Historical Relational Layer**: `Jolpica-F1 API` (an open-source, community-maintained Ergast-compatible API) for historical race results, driver/constructor standings, qualifying positions, and circuit metadata.
+3. **High-Frequency Telemetry Layer (Supplemental, 2023+ Only)**: `OpenF1 REST API` for supplemental 10Hz cornering telemetry, detailed track status logs, and pit-lane timing validation. **Note**: Historical benchmark races prior to 2023 (e.g., 2021 Abu Dhabi, 2022 Monaco, 2022 Silverstone) do **NOT** depend on OpenF1 and operate fully using FastF1 + Jolpica.
+4. **Offline Benchmark Seed Layer**: Kaggle Formula 1 World Championship static dataset (1950–2024 CSV dump) pre-seeded into DuckDB for offline development and integration tests without network dependencies.
 
 ---
 
@@ -19,7 +19,7 @@ PITWALL relies on official, open-source, and legally compliant Formula 1 data so
 
 | Data Source | Base URL / Package | License / Rights | Historical Coverage | Granularity | Rate Limits | Auth Required | Cache Strategy | Primary Use in PITWALL |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **FastF1** | `fastf1` (PyPI) / `docs.fastf1.dev` | MIT (Code); FIA Timing Data (Fair Use / Non-Commercial) | 2018 – Present (Full telemetry); 2019+ (Tyre data) | Lap-level, Sector-level, 10Hz Telemetry, Weather | Respects FIA timing server (built-in throttle) | No | Local disk cache in `data/cache/fastf1/` (git-ignored) | Primary driver for lap times, tyre compound, tyre age, pit stops, and weather track temp across all benchmark seasons. |
+| **FastF1** | `fastf1` (PyPI) / `docs.fastf1.dev` | MIT (Code); FIA/FOWC Timing Data (Non-Commercial) | 2018 – Present (Full telemetry); 2019+ (Tyre data) | Lap-level, Sector-level, 10Hz Telemetry, Weather | Respects timing server limits (built-in throttle) | No | Local disk cache in `data/cache/fastf1/` (git-ignored) | Primary driver for lap times, tyre compound, tyre age, pit stops, and track temp across benchmark seasons. |
 | **Jolpica-F1 API** | `api.jolpi.ca/ergast/f1/` | CC BY-NC-SA 4.0 | 1950 – Present | Session / Lap / Pit Stop | 4 req/sec (soft limit) | No | Cached to local DuckDB (`data/pitwall.duckdb`) | Qualifying order, historical grid positions, constructor points, official race classification. |
 | **OpenF1 API** | `api.openf1.org/v1/` | MIT / Open Data | **2023 – Present Only** | 1Hz - 10Hz telemetry | 30 req/min | No | Cached per session in `data/cache/openf1/` (git-ignored) | **Supplemental only**. High-granularity telemetry for 2023+ races. Pre-2023 races do NOT use this source. |
 | **Kaggle F1 CSV Dump** | Local static files | CC0 / Public Domain | 1950 – 2024 | Lap / Pit Stop / Results | N/A (Offline) | No | Imported directly to DuckDB on `make setup` | Baseline database seeding, unit tests, fast offline integration tests. |
@@ -29,10 +29,10 @@ PITWALL relies on official, open-source, and legally compliant Formula 1 data so
 
 ## 3. Data Rights, Licensing & Redistribution Policy
 
-1. **Upstream Data Rights Clarification**: FastF1 and OpenF1 access live/archived timing feeds provided by Formula One World Championship Limited (FOWC). While the client libraries are MIT-licensed, raw timing data and telemetry remain subject to FOWC non-commercial fair use.
+1. **Upstream Data Rights**: FastF1 and OpenF1 access timing feeds provided by Formula One World Championship Limited (FOWC). While client libraries are open-source, raw timing data remain subject to upstream FOWC terms.
 2. **Redistribution Boundary**:
-   - **Git-Ignored Local Data**: Raw downloaded telemetry files (`.fastf1-cache/`, `data/raw/`, `data/cache/`) are strictly kept local and excluded from git commits via `.gitignore`.
-   - **Redistributable Artifacts**: Derived, aggregate feature tables (e.g., anonymized degradation coefficients, aggregated sector averages) and trained statistical model weights (`models/artifacts/`) contain no raw FIA timing streams and are fully redistributable under the project's open-source license.
+   - **Git-Ignored Local Data**: Downloaded raw telemetry files (`.fastf1-cache/`, `data/raw/`, `data/cache/`) are strictly kept local and excluded from git commits via `.gitignore`.
+   - **Derived Artifact Compliance**: Derived feature matrices, aggregated statistics, and trained model weights intended for open-source repository distribution must be audited to ensure they do not contain or allow reconstruction of restricted upstream proprietary timing streams.
 
 ---
 

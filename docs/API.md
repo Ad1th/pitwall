@@ -8,7 +8,7 @@
 
 The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request and response bodies use strict JSON formatting. HTTP error responses adhere to standard HTTP status codes and return detailed RFC 7807 error objects.
 
-*Note: All numerical values appearing in example payloads below are strictly `[ILLUSTRATIVE EXAMPLE PAYLOADS]` for schema demonstration purposes.*
+*Note: All numerical values appearing in example payloads below are strictly `[ILLUSTRATIVE EXAMPLE PAYLOADS]` with mathematically consistent illustrative values.*
 
 ---
 
@@ -19,9 +19,9 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
 | `GET` | `/api/v1/races` | List all available historical F1 races in database. |
 | `GET` | `/api/v1/races/{race_id}` | Get race metadata, total laps, circuit profile, and driver grid. |
 | `GET` | `/api/v1/races/{race_id}/state/{lap}` | Get exact reconstructed \( \text{RaceState}(t) \) at lap \( t \). |
-| `POST` | `/api/v1/simulate` | Run Monte Carlo strategy simulation for a driver at a specific lap. |
+| `POST` | `/api/v1/simulate` | Run paired Monte Carlo strategy simulation (CRN) for a driver at a lap. |
 | `POST` | `/api/v1/counterfactual` | Evaluate counterfactual decision vs actual historical outcome. |
-| `GET` | `/api/v1/races/{race_id}/autopsy` | Run automated historical race autopsy; rank key decision points by regret. |
+| `GET` | `/api/v1/races/{race_id}/autopsy` | Run automated historical race autopsy; rank key decision points by Utility Regret. |
 | `GET` | `/api/v1/models/metrics` | Retrieve cross-validation accuracy metrics for tyre, pace, and overtaking models. |
 | `GET` | `/api/v1/health` | Health check endpoint. |
 
@@ -112,28 +112,34 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
   "evaluations": [
     {
       "strategy_id": "STAY_OUT",
-      "expected_finish_pos": 1.84,
-      "confidence_interval_95": [1.00, 2.00],
+      "expected_utility": 15.60,
+      "expected_finish_pos": 1.68,
+      "expected_finish_pos_ci95": [1.65, 1.71],
+      "outcome_prediction_quantiles": [1.0, 2.0],
       "win_probability": 0.32,
       "podium_probability": 1.00,
       "position_distribution": {
         "P1": 1600,
         "P2": 3400
       },
-      "strategy_regret_vs_optimal": 0.68,
+      "utility_regret": 2.80,
+      "expected_position_delta": 0.52,
       "is_statistically_distinct": true
     },
     {
       "strategy_id": "PIT_NOW_SOFT",
+      "expected_utility": 18.40,
       "expected_finish_pos": 1.16,
-      "confidence_interval_95": [1.00, 2.00],
+      "expected_finish_pos_ci95": [1.14, 1.18],
+      "outcome_prediction_quantiles": [1.0, 2.0],
       "win_probability": 0.84,
       "podium_probability": 1.00,
       "position_distribution": {
         "P1": 4200,
         "P2": 800
       },
-      "strategy_regret_vs_optimal": 0.00,
+      "utility_regret": 0.00,
+      "expected_position_delta": 0.00,
       "is_statistically_distinct": true
     }
   ]
@@ -162,8 +168,9 @@ The PITWALL Backend API is served via FastAPI at base URL `/api/v1`. All request
       "team": "Mercedes",
       "actual_decision": "STAY_OUT",
       "recommended_decision": "PIT_NOW_SOFT",
-      "estimated_regret_positions": 0.68,
-      "regret_confidence_interval_95": [0.24, 1.12],
+      "utility_regret": 2.80,
+      "utility_regret_ci95": [1.40, 4.20],
+      "expected_position_delta": 0.52,
       "is_statistically_distinct": true,
       "primary_contributing_factors": [
         "Safety car tire age delta advantage under model assumptions",

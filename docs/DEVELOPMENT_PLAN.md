@@ -62,26 +62,26 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 
 ---
 
-### Stage 4: Vectorized Monte Carlo Race Simulator Kernel
-- **Goal**: Build high-performance NumPy simulation engine with overtaking friction and statistical validity priority.
+### Stage 4: Paired Monte Carlo Race Simulator Kernel (CRN)
+- **Goal**: Build high-performance NumPy simulation engine using Common Random Numbers (CRN), overtaking friction, and statistical validity priority.
 - **Files Affected**: `backend/app/engine/simulator.py`.
 - **Dependencies**: Stage 3.
-- **Tasks**: Implement `MonteCarloSimulator.run(state, candidate_strategies, n_sims=5000)` using vectorized array broadcasting. Sample pace noise, pit stop variances, overtaking friction swaps, and SC probabilities.
-- **Tests**: `tests/test_simulator.py` (verifies 20-car position transitions, statistical correctness, non-negative position variance, and deterministic outputs given fixed random seed).
-- **Acceptance Criteria**: **Primary Criteria**: Physical state vector correctness and overtaking logic validation. **Optimization Target**: Execution under 450ms on CPU.
+- **Tasks**: Implement `MonteCarloSimulator.run(state, candidate_strategies, n_sims=5000)` using vectorized array broadcasting and Common Random Numbers. Sample pace noise, pit stop variances, overtaking friction swaps, and SC probabilities.
+- **Tests**: `tests/test_simulator.py` (verifies 20-car position transitions, statistical correctness, CRN pairing variance reduction, and deterministic outputs given fixed random seed).
+- **Acceptance Criteria**: **Primary Criteria**: Physical state vector correctness, CRN variance reduction, and overtaking logic validation. **Optimization Target**: Execution under 450ms on CPU.
 - **Demo Milestone**: Simulator test suite passing with deterministic reproducibility.
 - **Must NOT Do**: Sacrifice model statistical validity for speed optimizations.
 
 ---
 
 ### Stage 5: Counterfactual Regret Engine & Strategy Optimizer
-- **Goal**: Build paired counterfactual simulation engine, coarse-to-fine strategy search optimizer, and confidence interval evaluator.
+- **Goal**: Build paired counterfactual simulation engine, coarse-to-fine strategy search optimizer, Utility Regret evaluator, and confidence interval calculator.
 - **Files Affected**: `backend/app/engine/counterfactual.py`, `backend/app/engine/optimizer.py`.
 - **Dependencies**: Stage 4.
-- **Tasks**: Implement coarse grid search screening (500 runs) + fine local refinement (5,000 runs); compute strategy regret with 95% confidence bounds; perform statistical indistinguishability tests.
+- **Tasks**: Implement coarse grid search screening (500 runs) + fine local refinement (5,000 runs); compute Utility Regret \( U(a^*) - U(a) \ge 0 \) and Expected Position Delta; compute 95% confidence bounds on pairwise utility differences \( \text{CI}_{95\%}(\Delta U) \); perform precise indistinguishability tests (\( 0 \in \text{CI}_{95\%}(\Delta U) \)).
 - **Tests**: `tests/test_counterfactual.py`.
-- **Acceptance Criteria**: Counterfactual engine runs paired simulations, outputs 95% confidence intervals, flags statistically indistinguishable strategies, and computes strategy regret without hardcoded answer assertions.
-- **Demo Milestone**: Counterfactual engine CLI outputs regret score and 95% CIs.
+- **Acceptance Criteria**: Counterfactual engine runs paired CRN simulations, outputs 95% confidence intervals, flags statistically indistinguishable strategies when \( 0 \in \text{CI}_{95\%}(\Delta U) \), and computes non-negative Utility Regret without hardcoded answer assertions.
+- **Demo Milestone**: Counterfactual engine CLI outputs Utility Regret score and 95% CIs.
 - **Must NOT Do**: Integrate LLM natural language generator yet.
 
 ---
@@ -92,7 +92,7 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 - **Dependencies**: Stage 5.
 - **Tasks**: Build `/api/v1/races`, `/state/{lap}`, `/simulate`, `/counterfactual`, `/autopsy` endpoints using FastAPI and Pydantic schemas, supporting `mode` query parameter.
 - **Tests**: `tests/test_api.py` (using `httpx.AsyncClient` / `TestClient`).
-- **Acceptance Criteria**: OpenAPI spec interactive docs at `http://localhost:8000/docs` return 200 OK for all endpoints with correct confidence interval fields.
+- **Acceptance Criteria**: OpenAPI spec interactive docs at `http://localhost:8000/docs` return 200 OK for all endpoints with correct expected utility confidence interval and outcome quantile fields.
 - **Demo Milestone**: Live API server executing simulations via curl request.
 - **Must NOT Do**: Build complex websocket streaming if HTTP JSON is sufficient.
 
@@ -123,12 +123,12 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 ---
 
 ### Stage 9: Interactive Strategy Simulator View
-- **Goal**: Build strategy builder UI with coarse grid search and confidence interval visualizations.
+- **Goal**: Build strategy builder UI with coarse grid search, expected utility CIs, and outcome prediction quantile visualizations.
 - **Files Affected**: `frontend/src/views/StrategySimulator.jsx`, `frontend/src/components/simulator/`.
 - **Dependencies**: Stage 8.
-- **Tasks**: Build strategy editor toolbar (coarse grid search toggle, pit lap picker, compound selector), trigger API POST `/api/v1/simulate`, and render Monte Carlo finish position density charts with 95% confidence shaded regions and indistinguishability alert banners.
+- **Tasks**: Build strategy editor toolbar (coarse grid search toggle, pit lap picker, compound selector), trigger API POST `/api/v1/simulate`, and render Monte Carlo finish position density charts with shaded outcome quantiles, expected utility 95% CIs, and indistinguishability alert banners when \( 0 \in \text{CI}_{95\%}(\Delta U) \).
 - **Tests**: End-to-end API simulation call integration test.
-- **Acceptance Criteria**: Triggering simulation updates probability density curve and confidence bounds within 500ms.
+- **Acceptance Criteria**: Triggering simulation updates probability density curve, confidence bounds, and outcome quantiles within 500ms.
 - **Demo Milestone**: Interactive strategy sandbox operational with confidence visualization.
 - **Must NOT Do**: Over-complicate chart animations.
 
@@ -138,9 +138,9 @@ PITWALL's development is broken into **16 modular, incremental stages (Stage 0 t
 - **Goal**: Build retrospective autopsy report and split-screen counterfactual replay views.
 - **Files Affected**: `frontend/src/views/RaceAutopsy.jsx`, `frontend/src/views/CounterfactualReplay.jsx`.
 - **Dependencies**: Stage 9.
-- **Tasks**: Render strategic regret mistake ranking table with 95% CIs, narrative breakdown cards, and dual-trajectory race replay line charts.
+- **Tasks**: Render Utility Regret mistake ranking table with 95% CIs and Expected Position Delta, narrative breakdown cards, and dual-trajectory race replay line charts.
 - **Tests**: Frontend snapshot & rendering tests.
-- **Acceptance Criteria**: Autopsy view renders top ranked regret events dynamically based on API output.
+- **Acceptance Criteria**: Autopsy view renders top ranked Utility Regret events dynamically based on API output.
 - **Demo Milestone**: Complete race autopsy screen functioning.
 - **Must NOT Do**: Add extraneous static text.
 

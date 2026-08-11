@@ -18,10 +18,11 @@ To ensure scientific defensibility, PITWALL strictly separates **Predictive Mode
     ┌───────────────────────────────────────────────────────┐       ┌───────────────────────────────────────────────────────┐
     │ 1. PREDICTIVE VALIDATION (Empirical Ground Truth)     │       │ 2. COUNTERFACTUAL EVALUATION (Unobserved Futures)     │
     ├───────────────────────────────────────────────────────┤       ├───────────────────────────────────────────────────────┤
-    │ - Actual Lap Times vs Model Predictions               │       │ - Sensitivity & Stress Testing                        │
-    │ - Actual Race Winners vs Binary Win Probabilities     │       │ - Internal Model Consistency checks                   │
-    │ - Actual Finish Positions vs Multiclass Distributions │       │ - Qualitative Sanity Checks (Expert Strategy Consensus│
-    │ - Metrics: RMSE, Brier Score, RPS, EMD                │       │   treated strictly as sanity check, NOT ground truth) │
+    │ - Actual Lap Times vs Model Predictions               │       │ - Paired Monte Carlo Simulations (Common Random Numbers│
+    │ - Actual Race Winners vs Binary Win Probabilities     │       │ - Utility Regret U(a*) - U(a) & Expected Position Delta│
+    │ - Actual Finish Positions vs Multiclass Distributions │       │ - 95% Confidence Intervals for Pairwise Delta U       │
+    │ - Metrics: RMSE, Brier Score, RPS, EMD                │       │ - Qualitative Sanity Checks (Expert Consensus treated │
+    │                                                       │       │   strictly as sanity check, NOT ground truth)         │
     └───────────────────────────────────────────────────────┘       └───────────────────────────────────────────────────────┘
 ```
 
@@ -64,14 +65,15 @@ To ensure scientific defensibility, PITWALL strictly separates **Predictive Mode
 
 ---
 
-## 4. Counterfactual Evaluation Protocol (No Predetermined Outcomes)
+## 4. Counterfactual Evaluation Protocol (Common Random Numbers & Indistinguishability)
 
 Counterfactual outcomes cannot be validated against direct empirical ground truth because alternative decisions were never run in reality. PITWALL evaluates counterfactual quality via:
 
-1. **Monotonicity & Sensitivity Audits**: Pitting for fresh tyres under green flag conditions must increase pace; adding dirty air delay must decrease pace.
-2. **Confidence Bounds & Overlap Audits**: Counterfactual recommendations must include 95% Monte Carlo confidence intervals. If strategy CIs overlap, the system must report strategies as statistically indistinguishable rather than forcing a arbitrary winner.
-3. **Qualitative Sanity Checks**: Retrospective comparisons against consensus expert post-race analysis (e.g. F1 strategy reviews) serve purely as **qualitative sanity checks**, never as mathematical ground truth.
-4. **No Hardcoded Test Expectations**: Tests must **NEVER** assert fixed predetermined numbers (such as requiring exactly `+0.68` regret for Hamilton at Abu Dhabi 2021). Tests assert structural properties, non-negativity of variance, and proper execution of fitted models.
+1. **Paired Common Random Numbers (CRN) Variance Reduction**: Counterfactual strategy runs reuse identical exogenous random seeds \( \omega_m \), isolating strategy variance from environmental noise.
+2. **Utility Regret & Position Delta Bounds**: Reports Utility Regret \( U(a^*) - U(a) \ge 0 \) alongside Expected Position Delta \( \mathbb{E}[\mathbf{P}(a)] - \mathbb{E}[\mathbf{P}(a^*)] \).
+3. **Precise Indistinguishability Criterion**: Strategies \( a_1, a_2 \) are flagged as **Statistically Indistinguishable** if \( 0 \in \text{CI}_{95\%}(\Delta U_{a_1, a_2}) \).
+4. **Qualitative Sanity Checks**: Retrospective comparisons against consensus expert post-race analysis serve purely as **qualitative sanity checks**, never as mathematical ground truth.
+5. **No Hardcoded Test Expectations**: Tests assert structural mathematical properties, non-negativity of Utility Regret, and proper execution of fitted models without asserting fixed numerical results.
 
 ---
 

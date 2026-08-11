@@ -2,7 +2,7 @@
 
 > **Don't analyze the race. Re-run it.**
 
-PITWALL is an open-source sports analytics platform built for the **AQX Sports Analytics Data Bowl 3.0**. It reconstructs historical Formula 1 race states \( \text{RaceState}(t) \) and evaluates counterfactual race strategies using statistical tyre degradation models, fuel pace decay equations, probabilistic overtaking friction kernels, and vectorized Monte Carlo simulation.
+PITWALL is an open-source sports analytics platform built for the **AQX Sports Analytics Data Bowl 3.0**. It reconstructs historical Formula 1 race states \( \text{RaceState}(t) \) and evaluates counterfactual race strategies using statistical tyre degradation models, fuel pace decay equations, probabilistic overtaking friction kernels, and paired vectorized Monte Carlo simulation with Common Random Numbers.
 
 ---
 
@@ -10,17 +10,17 @@ PITWALL is an open-source sports analytics platform built for the **AQX Sports A
 
 - **Race State Reconstruction**: Reconstructs complete spatial vectors for all 20 drivers at any historical lap across two operational modes (**Decision-Time Mode** vs **Hindsight / Oracle Mode**).
 - **Probabilistic Overtaking Mechanism**: Models dirty air pace delays and logistic overtake probabilities for 20-car traffic dynamics.
-- **Vectorized Monte Carlo Simulator**: Simulates 5,000 randomized race futures in under 300ms using NumPy array broadcasting while prioritizing physical model correctness.
+- **Paired Monte Carlo Simulator (CRN)**: Simulates 5,000 randomized race futures in under 300ms using NumPy array broadcasting and Common Random Numbers for maximum variance reduction.
 - **Coarse-to-Fine Strategy Optimizer**: Screens multi-stop strategies via fast coarse grid search (500 runs) and refines top candidates at 1-lap resolution (5,000 runs).
-- **Strategy Regret & Confidence Engine**: Quantifies position regret with 95% Monte Carlo confidence bounds and flags statistically indistinguishable strategies.
-- **Automated Race Autopsy**: Ranks key strategic decisions throughout a race by position regret impact without hardcoded pre-determined outcomes.
-- **Telemetry Command Center**: Dark-mode telemetry UI featuring glassmorphic components, interactive lap scrubbers, mode toggles, and probability density curves with shaded confidence regions.
+- **Utility Regret & Confidence Engine**: Quantifies Utility Regret \( U(a^*) - U(a) \ge 0 \) with 95% Monte Carlo confidence bounds and flags statistically indistinguishable strategies (\( 0 \in \text{CI}_{95\%}(\Delta U) \)).
+- **Automated Race Autopsy**: Ranks key strategic decisions throughout a race by Utility Regret impact without hardcoded pre-determined outcomes.
+- **Telemetry Command Center**: Dark-mode telemetry UI featuring glassmorphic components, interactive lap scrubbers, mode toggles, outcome prediction quantiles, and probability density curves with shaded 95% confidence bounds.
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Data Ingestion**: `FastF1`, `Jolpica-F1 API`, `OpenF1` (Supplemental 2023+)
+- **Data Ingestion**: `FastF1`, `Jolpica-F1 API` (Community Ergast-compatible API), `OpenF1` (Supplemental 2023+)
 - **Analytical Storage**: `DuckDB` (Embedded OLAP)
 - **Predictive ML**: `scikit-learn`, `LightGBM`, `SciPy`
 - **Monte Carlo Engine**: Vectorized `NumPy`

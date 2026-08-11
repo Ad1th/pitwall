@@ -19,13 +19,13 @@ PITWALL relies on four statistical/ML model components feeding the Monte Carlo s
 
 ## 2. Parameter Estimation Strategy (Calibrated Priors vs Hardcoded Constants)
 
-PITWALL does **NOT** treat parameters such as fuel mass decay or dirty air delays as immutable hardcoded constants. Instead, parameters are estimated empirically from historical lap timing telemetry using regression models with physical priors:
+PITWALL does **NOT** treat parameters such as fuel mass decay, dirty air delays, or pit-lane time loss as immutable hardcoded constants. Instead, parameters are estimated empirically from historical lap timing telemetry using regression models with physical priors:
 
 | Parameter Symbol | Description | Initial Calibrated Prior | Estimation Method |
 | :--- | :--- | :--- | :--- |
 | \( \gamma_{\text{fuel}} \) | Fuel Mass Burn Pace Gain (sec/lap) | \( \mathcal{N}(0.035, 0.005^2) \) | Estimated per circuit via clean-stint linear regression over lap index. |
 | \( \delta_{\text{dirty\_air}} \) | Base Dirty Air Traffic Delay (sec/lap) | \( \mathcal{N}(0.40, 0.10^2) \) | Estimated via lap time deltas when `interval_to_ahead <= 1.0s`. |
-| \( \mu_{\text{pit\_loss}} \) | Base Pit Lane Time Loss (sec) | Circuit-specific (e.g. Monza=21s, Monaco=24s) | Measured median from historical pit stop telemetry per circuit. |
+| \( \mu_{\text{pit\_loss}} \) | Estimated Pit Lane Time Loss (sec) | Circuit-specific prior (e.g. Monza ~21s, Monaco ~24s) | Measured median from historical pit stop telemetry per circuit. |
 | \( k_{\text{deg}} \) | Compound Wear Multiplier | Compound-specific prior | Fitted via spline / GBDT on clean-air stints. |
 
 ---
@@ -73,37 +73,53 @@ P(\text{Overtake}_{i \to j} \mid t) = \frac{1}{1 + \exp\left( -\left( \beta_0 + 
 
 ---
 
-## 5. Strategy Optimizer Search Space & Optimization Algorithm
+## 5. Strategy Optimizer Search Space & Paired Monte Carlo Engine
 
-The Strategy Optimizer finds candidate pit strategies \( a \in \mathcal{A} \) that maximize expected utility. To prevent exhaustive combinatorial explosion while guaranteeing deep strategic coverage, PITWALL employs a **Two-Stage Coarse-to-Fine Search**:
+### 5.1 Optimization Objective & Regret Definitions
+The Strategy Optimizer evaluates candidate pit strategies \( a \in \mathcal{A} \) to maximize expected utility:
 
-```
-┌────────────────────────────────────────────────────────────┐
-│ 1. Feasible Domain Filtering (FIA Rules & Window Constraints│
-└────────────────────────────┬───────────────────────────────┘
-                             │
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│ 2. Coarse Grid Search (Evaluate 1-Stop, 2-Stop, 3-Stop)     │
-│    - Step size: 3-lap intervals across stint boundaries   │
-│    - Fast 500-iteration Monte Carlo screening              │
-└────────────────────────────┬───────────────────────────────┘
-                             │
-                             ▼
-┌────────────────────────────────────────────────────────────┐
-│ 3. Fine-Grained Local Refinement                           │
-│    - Top 5 candidate strategies from Coarse Search         │
-│    - 1-lap step size around candidate pit laps             │
-│    - Full 5,000-iteration Monte Carlo evaluation          │
-└────────────────────────────────────────────────────────────┘
-```
+\[
+U(a) = \mathbb{E}_{\omega} \left[ \text{Points}(\mathbf{P}_{N_{\text{total}}}(a)) \right] - \lambda \cdot \text{Var}(\mathbf{P}_{N_{\text{total}}}(a))
+\]
+
+Let \( a^* = \arg\max_{a' \in \mathcal{A}} U(a') \) be the optimal strategy under the model. We rigorously distinguish between:
+
+1. **Utility Regret**: The lost expected utility relative to the optimal strategy:
+   \[
+   \text{UtilityRegret}(a) = U(a^*) - U(a) \ge 0
+   \]
+   By definition, Utility Regret is non-negative and directly measures sub-optimality against the optimizer's objective.
+
+2. **Expected Position Delta**: The difference in expected finishing position:
+   \[
+   \text{ExpectedPositionDelta}(a) = \mathbb{E}[\mathbf{P}_{N_{\text{total}}}(a)] - \mathbb{E}[\mathbf{P}_{N_{\text{total}}}(a^*)]
+   \]
+   This metric specifically measures position changes, allowing strategists to evaluate trade-offs between expected finishing rank and variance reduction.
+
+### 5.2 Paired Monte Carlo Simulations with Common Random Numbers (CRN)
+To compare candidate strategy \( a \) against baseline strategy \( a_0 \), PITWALL executes **Paired Monte Carlo Simulations using Common Random Numbers (CRN)**:
+- For each simulation run \( m \in [1, M] \), both strategies are evaluated under the **exact same exogenous stochastic realizations** \( \omega_m \) (weather state transitions, Safety Car deployments, driver baseline lap pace noise, and pit stop duration noise).
+- The pairwise utility difference for run \( m \) is:
+  \[
+  \Delta U^{(m)} = U(a, \omega_m) - U(a_0, \omega_m)
+  \]
+- Because exogenous environmental noise is identical across paired runs, environmental variance cancels out, dramatically reducing the variance of the estimated mean utility difference \( \Delta U \).
 
 ---
 
-## 6. Uncertainty & Confidence Reporting
+## 6. Uncertainty Distinction & Precise Indistinguishability Criterion
 
-For any strategy evaluation \( U(a) \), PITWALL outputs full outcome distributions and statistical confidence intervals:
+PITWALL strictly distinguishes between **Outcome Prediction Quantiles** and **Statistical Confidence Intervals**:
 
-1. **95% Monte Carlo Confidence Bounds**: Computed via empirical 5th and 95th percentiles of simulated finish positions (\( P_{05}, P_{95} \)).
-2. **Strategy Indistinguishability Test**: Two candidate strategies \( a_1, a_2 \) are flagged as **Statistically Indistinguishable** if their 95% confidence intervals overlap significantly and a two-sample Kolmogorov-Smirnov test on position outcomes fails to reject the null hypothesis at \( \alpha = 0.05 \).
-3. **Regret Confidence Reporting**: Strategy Regret is reported as a point estimate with explicit standard error and confidence bounds, preventing over-confident claims on marginal strategy differences.
+1. **Outcome Prediction Quantiles / Outcome Intervals**: The empirical 5th and 95th percentiles (\( q_{05}, q_{95} \)) of simulated finish positions across the \( M = 5,000 \) runs. These describe individual race outcome dispersion resulting from inherent race randomness.
+2. **Confidence Intervals (CIs)**: Statistical bounds for estimated expected values, such as the 95% CI for expected utility \( \text{CI}_{95\%}(\mathbb{E}[U(a)]) \) or the 95% CI for the pairwise difference \( \text{CI}_{95\%}(\Delta U) \), calculated via Monte Carlo standard error:
+   \[
+   \text{SE}(\Delta U) = \frac{s_{\Delta U}}{\sqrt{M}} \implies \text{CI}_{95\%}(\Delta U) = \left[ \Delta U - 1.96 \cdot \text{SE}(\Delta U), \, \Delta U + 1.96 \cdot \text{SE}(\Delta U) \right]
+   \]
+
+3. **Precise Indistinguishability Criterion**:
+   Two candidate strategies \( a_1 \) and \( a_2 \) are **Statistically Indistinguishable** if and only if the 95% confidence interval for their pairwise utility difference \( \Delta U_{a_1, a_2} \) contains zero:
+   \[
+   0 \in \text{CI}_{95\%}(\Delta U_{a_1, a_2})
+   \]
+   If zero is contained in the 95% CI, the system reports no statistically significant preference between \( a_1 \) and \( a_2 \). Distributional diagnostic tests (such as Kolmogorov-Smirnov or Earth Mover's Distance) serve strictly as supporting diagnostics.

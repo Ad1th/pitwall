@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS circuits (
     longitude DOUBLE,
     length_km DOUBLE NOT NULL,
     turns INT,
-    pit_lane_loss_sec DOUBLE NOT NULL DEFAULT 22.0,
+    pit_lane_loss_sec DOUBLE, -- Estimated pit lane time loss (sec), populated via model prior/fitting
     base_degradation_mult DOUBLE DEFAULT 1.0,
     overtaking_difficulty_mult DOUBLE DEFAULT 1.0 -- Circuit overtaking resistance factor
 );
@@ -126,15 +126,19 @@ CREATE TABLE IF NOT EXISTS strategy_evaluations (
     simulation_id VARCHAR REFERENCES simulation_runs(simulation_id),
     strategy_code VARCHAR NOT NULL, -- e.g., 'PIT_NOW_HARD', 'STAY_OUT'
     planned_pit_laps VARCHAR, -- e.g., '[32]'
+    expected_utility DOUBLE NOT NULL,
     expected_finish_pos DOUBLE NOT NULL,
-    finish_pos_p05 DOUBLE NOT NULL, -- 95% CI lower bound (5th percentile)
-    finish_pos_p95 DOUBLE NOT NULL, -- 95% CI upper bound (95th percentile)
+    expected_finish_pos_ci95_lower DOUBLE NOT NULL, -- 95% CI for expected finish position mean
+    expected_finish_pos_ci95_upper DOUBLE NOT NULL, -- 95% CI for expected finish position mean
+    outcome_pos_p05 DOUBLE NOT NULL, -- 5th percentile outcome prediction quantile
+    outcome_pos_p95 DOUBLE NOT NULL, -- 95th percentile outcome prediction quantile
     win_probability DOUBLE NOT NULL,
     podium_probability DOUBLE NOT NULL,
     points_probability DOUBLE NOT NULL,
     dnf_probability DOUBLE NOT NULL,
-    regret_vs_optimal DOUBLE NOT NULL DEFAULT 0.0,
-    is_statistically_distinct BOOLEAN DEFAULT TRUE
+    utility_regret DOUBLE NOT NULL DEFAULT 0.0, -- U(a*) - U(a) >= 0 relative to optimal strategy
+    expected_position_delta DOUBLE NOT NULL DEFAULT 0.0, -- E[Pos(a)] - E[Pos(a*)]
+    is_statistically_distinct BOOLEAN -- Computed via pairwise 95% CI check on DeltaU (NO DEFAULT)
 );
 ```
 
